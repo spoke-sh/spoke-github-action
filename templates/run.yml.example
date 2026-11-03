@@ -1,0 +1,36 @@
+# NON-EXECUTABLE PROPOSAL. Keep outside .github/workflows until qualification.
+# Routing target and action SHAs are placeholders, not an available service.
+name: Spoke CI
+on:
+  workflow_call:
+    inputs:
+      command:
+        required: true
+        type: string
+      artifact-path:
+        required: false
+        type: string
+        default: ""
+permissions:
+  contents: read
+jobs:
+  run:
+    runs-on: spoke-ci-linux-x64
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@<reviewed-checkout-sha>
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Execute requested work
+        shell: bash
+        env:
+          SPOKE_COMMAND: ${{ inputs.command }}
+        run: bash --noprofile --norc -e -o pipefail -c "$SPOKE_COMMAND"
+      - name: Preserve requested artifacts
+        if: ${{ always() && inputs.artifact-path != '' }}
+        uses: actions/upload-artifact@<reviewed-upload-artifact-sha>
+        with:
+          name: spoke-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: ${{ inputs.artifact-path }}
+          if-no-files-found: error
